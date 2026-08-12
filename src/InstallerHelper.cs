@@ -351,6 +351,7 @@ namespace HapInstaller
                 certId = GetStr(certBlock, "\"id\":\"([^\"]+)\"");
                 string objId = GetStr(certBlock, "\"certObjectId\":\"([^\"]+)\"");
                 log("已找到调试证书: " + certId);
+                log("已复用账号中已有的调试证书；若签名提示密钥不匹配，请把配套的 hmos.p12 放到 store 目录");
                 if (!File.Exists(Path.Combine(storeDir, "hmos-debug.cer")))
                     DownloadCert(storeDir, objId, log);
                 return "";
@@ -613,16 +614,14 @@ namespace HapInstaller
             if (File.Exists(portableJava)) JavaPath = portableJava;
             if (File.Exists(portableSignTool)) HapSignTool = portableSignTool;
             if (File.Exists(portableHdc)) HdcPath = portableHdc;
-            if (Directory.Exists(localStore))
-            {
+            if (Directory.Exists(localStore) && (StoreDir.Length == 0 || !Directory.Exists(StoreDir)))
                 StoreDir = localStore;
-                if (!File.Exists(Keystore) && File.Exists(Path.Combine(localStore, "hmos.p12")))
-                    Keystore = Path.Combine(localStore, "hmos.p12");
-                if (!File.Exists(Cert) && File.Exists(Path.Combine(localStore, "hmos-debug.cer")))
-                    Cert = Path.Combine(localStore, "hmos-debug.cer");
-                if (!File.Exists(Profile) && File.Exists(Path.Combine(localStore, "hmos-debug.p7b")))
-                    Profile = Path.Combine(localStore, "hmos-debug.p7b");
-            }
+            if (!File.Exists(Keystore) && File.Exists(Path.Combine(localStore, "hmos.p12")))
+                Keystore = Path.Combine(localStore, "hmos.p12");
+            if (!File.Exists(Cert) && File.Exists(Path.Combine(localStore, "hmos-debug.cer")))
+                Cert = Path.Combine(localStore, "hmos-debug.cer");
+            if (!File.Exists(Profile) && File.Exists(Path.Combine(localStore, "hmos-debug.p7b")))
+                Profile = Path.Combine(localStore, "hmos-debug.p7b");
             string[] hdcCandidates = { HdcPath };
             foreach (string c in hdcCandidates)
             {
@@ -1667,6 +1666,7 @@ namespace HapInstaller
                 string certId = "";
                 string certErr = HuaweiApi.EnsureCert(txtStore.Text, Log, ref certId);
                 if (certErr.Length > 0) return certErr;
+                txtCert.Text = Path.Combine(txtStore.Text, "hmos-debug.cer");
                 string udid = GetUdid();
                 if (udid.Length == 0 || udid.StartsWith("获取")) return "获取设备 UDID 失败: " + udid;
                 List<string> deviceIds = HuaweiApi.EnsureDevice(udid, Log);
@@ -1714,6 +1714,7 @@ namespace HapInstaller
                 settings.HapSignTool, p12Path);
             ProcessRunner.Run(settings.JavaPath, kArgs, out code);
             if (!File.Exists(p12Path)) return "密钥生成失败";
+            txtPwd.Text = "hmos123";
             string cArgs = string.Format(
                 " -jar \"{0}\" generate-csr -keyAlias hmos -keyPwd hmos123 -subject \"C=CN,O=HUAWEI,OU=HUAWEI IDE,CN=hmos\" -signAlg SHA256withECDSA -keystoreFile \"{1}\" -keystorePwd hmos123 -outFile \"{2}\"",
                 settings.HapSignTool, p12Path, csrPath);
