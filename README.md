@@ -28,7 +28,7 @@
 | `store/hmos-debug.cer` | 对应的调试证书 |
 | `store/hmos.csr` | 证书请求文件（用于向华为云注册调试证书） |
 
-**来源**：这套材料来自开源项目 **小白调试助手**（[likuai2010/auto-installer](https://github.com/likuai2010/auto-installer)）在其公开 Release 中附带的调试签名材料（原名 `xiaobai.p12` / `xiaobai-debug.cer` / `xiaobai.csr`）。该项目及其发布包均公开可下载，任何人均可获取，因此不属于任何个人的私密信息。本工具仅将其重命名（`hmos.*`）并内置，未修改密钥/证书内容。
+**来源**：这套材料来自开源项目 **小白调试助手**（[likuai2010/auto-installer](https://github.com/likuai2010/auto-installer)）在其公开 Release 中附带的调试签名材料（原名 `xiaobai.p12` / `xiaobai-debug.cer` / `xiaobai.csr`）。该项目及其发布包均公开可下载，任何人均可获取，因此不属于任何个人的私密信息。本工具仅将其重命名（`hmos.*`）并内置，调整了 keystore 的别名（`xiaobai`→`hmos`）与密码（统一为 `hmos123`），**密钥本身未改动**。
 
 **为什么可以这样用**：
 
