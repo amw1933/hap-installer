@@ -357,8 +357,7 @@ namespace HapInstaller
                 string objId = GetStr(certBlock, "\"certObjectId\":\"([^\"]+)\"");
                 log("已找到调试证书: " + certId);
                 log("已复用账号中已有的调试证书；若签名提示密钥不匹配，请把配套的 hmos.p12 放到 store 目录");
-                if (!File.Exists(Path.Combine(storeDir, "hmos-debug.cer")))
-                    DownloadCert(storeDir, objId, log);
+                DownloadCert(storeDir, objId, log);
                 return "";
             }
             // create cert with csr
@@ -1524,6 +1523,15 @@ namespace HapInstaller
                     existing = FindProfile(currentInfo.Bundle);
                     if (existing != null) txtProfile.Text = existing;
                 }
+            }
+            if (HuaweiApi.LoggedIn)
+            {
+                string certId = "";
+                string certErr = HuaweiApi.EnsureCert(txtStore.Text, Log, ref certId);
+                if (certErr.Length == 0)
+                    txtCert.Text = Path.Combine(txtStore.Text, "hmos-debug.cer");
+                else
+                    Log("证书同步失败: " + certErr);
             }
             string outHap = Path.Combine(Path.GetTempPath(), currentInfo.Bundle + "_signed.hap");
             if (!SignHap(hap, outHap)) return;
