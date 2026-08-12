@@ -1035,7 +1035,6 @@ namespace HapInstaller
         {
             settings.Load();
             settings.AutoFix();
-            aclBlacklist.Add("ohos.permission.READ_PASTEBOARD");
             string exeDir = Path.GetDirectoryName(Application.ExecutablePath) ?? ".";
             HuaweiApi.AccountFile = settings.StoreDir.Length > 0
                 ? Path.Combine(settings.StoreDir, "userInfo.json")
@@ -1862,7 +1861,14 @@ namespace HapInstaller
                     }
                 }
                 string outHap = tmpDir + ".hap";
-                ZipFile.CreateFromDirectory(tmpDir, outHap);
+                using (ZipArchive dest = ZipFile.Open(outHap, ZipArchiveMode.Create))
+                {
+                    foreach (string file in Directory.GetFiles(tmpDir, "*", SearchOption.AllDirectories))
+                    {
+                        string rel = file.Substring(tmpDir.Length).TrimStart('\\', '/').Replace('\\', '/');
+                        dest.CreateEntryFromFile(file, rel, CompressionLevel.NoCompression);
+                    }
+                }
                 return outHap;
             }
             catch (Exception ex)
