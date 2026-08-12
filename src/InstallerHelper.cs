@@ -336,6 +336,11 @@ namespace HapInstaller
             string listResp = Request(
                 "https://connect-api.cloud.huawei.com/api/cps/harmony-cert-manage/v1/cert/list", "GET", null, null, out code);
             if (code != 200) return "获取证书列表失败 (" + code + ")";
+
+            if (HasDebugCert(listResp))
+            {
+                log("账号中已有调试证书，将复用；请确保 store 目录里有配套的 hmos.p12（否则密钥不匹配会签名失败）");
+            }
             // find debug cert (certType=1) in cert list
             string certBlock = "";
             foreach (Match m in Regex.Matches(listResp, "\\{[^{}]*\\}"))
@@ -373,6 +378,24 @@ namespace HapInstaller
             log("已创建调试证书: " + certId);
             DownloadCert(storeDir, newObj, log);
             return "";
+        }
+
+        private static bool HasDebugCert(string listResp)
+        {
+            foreach (Match m in Regex.Matches(listResp, "\\{[^{}]*\\}"))
+            {
+                if (m.Value.Contains("\"certType\":1")) return true;
+            }
+            return false;
+        }
+
+        public static bool HasDebugCertOnAccount(Action<string> log)
+        {
+            int code;
+            string listResp = Request(
+                "https://connect-api.cloud.huawei.com/api/cps/harmony-cert-manage/v1/cert/list", "GET", null, null, out code);
+            if (code != 200) return false;
+            return HasDebugCert(listResp);
         }
 
         private static void DownloadCert(string storeDir, string objId, Action<string> log)
@@ -1661,6 +1684,8 @@ namespace HapInstaller
             try
             {
                 Log("开始自动生成 Profile ...");
+                if (HuaweiApi.HasDebugCertOnAccount(Log) && !File.Exists(Path.Combine(txtStore.Text, "hmos.p12")))
+                    return "账号已有调试证书，但 store 目录缺少配套密钥 hmos.p12；请把原签名材料（hmos.p12、hmos-debug.cer、com_*.p7b）放入 store 目录后重试";
                 string keyErr = EnsureLocalKeypair();
                 if (keyErr.Length > 0) return keyErr;
                 string certId = "";
