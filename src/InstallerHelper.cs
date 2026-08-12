@@ -497,12 +497,29 @@ namespace HapInstaller
                         info.VersionCode = Get(json, "versionCode");
                         info.MainAbility = Get(json, "mainElement");
                         if (info.MainAbility.Length == 0) info.MainAbility = "EntryAbility";
-                        Match permBlock = Regex.Match(json, "\"requestPermissions\"\\s*:\\s*\\[(.*?)\\]");
-                        if (permBlock.Success)
+                        try
                         {
-                            foreach (Match pm in Regex.Matches(permBlock.Groups[1].Value, "\"name\"\\s*:\\s*\"([^\"]+)\""))
-                                info.Permissions.Add(pm.Groups[1].Value);
+                            var ser = new JavaScriptSerializer();
+                            var root = ser.Deserialize<Dictionary<string, object>>(json);
+                            if (root != null && root.ContainsKey("module"))
+                            {
+                                Dictionary<string, object> module = root["module"] as Dictionary<string, object>;
+                                if (module != null && module.ContainsKey("requestPermissions"))
+                                {
+                                    ArrayList perms = module["requestPermissions"] as ArrayList;
+                                    if (perms != null)
+                                    {
+                                        foreach (object o in perms)
+                                        {
+                                            Dictionary<string, object> d = o as Dictionary<string, object>;
+                                            if (d != null && d.ContainsKey("name"))
+                                                info.Permissions.Add(Convert.ToString(d["name"]));
+                                        }
+                                    }
+                                }
+                            }
                         }
+                        catch { }
                         string minApi = Get(json, "minAPIVersion");
                         int v;
                         if (int.TryParse(minApi, out v) && v >= 1000000)
@@ -1711,6 +1728,7 @@ namespace HapInstaller
                         if (p == a) { acl.Add(p); break; }
                     }
                 }
+                Log("Profile 权限清单: " + (acl.Count > 0 ? string.Join(", ", acl) : "(无受限权限)"));
                 string err = HuaweiApi.CreateProfile(currentInfo.Bundle, acl, deviceIds, certId, txtStore.Text, Log);
                 if (err.Length > 0) return err;
                 string profile = FindProfile(currentInfo.Bundle);
