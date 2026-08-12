@@ -1,0 +1,21 @@
+# 个人敏感文件（切勿提交）
+store/
+*.ini
+userInfo.json
+login_debug.log
+*.p12
+*.p7b
+*.cer
+*.csr
+key.pem
+
+# 构建产物/大文件
+*.zip
+发布版/
+鸿蒙安装助手-便携版/
+jbr/
+tools/
+
+# 系统
+.DS_Store
+Thumbs.db
