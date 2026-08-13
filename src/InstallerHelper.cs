@@ -585,6 +585,8 @@ namespace HapInstaller
         public string KeyAlias = "hmos";
         public bool AutoProfile = true;
         public string LastHap = "";
+        public string LastIp = "";
+        public string LastPort = "";
         public string IniPath;
 
         public Settings()
@@ -616,6 +618,8 @@ namespace HapInstaller
                         case "alias": KeyAlias = val; break;
                         case "autoProfile": bool b; AutoProfile = bool.TryParse(val, out b) && b; break;
                         case "lastHap": LastHap = val; break;
+                        case "ip": LastIp = val; break;
+                        case "port": LastPort = val; break;
                     }
                 }
             }
@@ -638,6 +642,8 @@ namespace HapInstaller
                 sb.AppendLine("alias=" + KeyAlias);
                 sb.AppendLine("autoProfile=" + AutoProfile);
                 sb.AppendLine("lastHap=" + LastHap);
+                sb.AppendLine("ip=" + LastIp);
+                sb.AppendLine("port=" + LastPort);
                 File.WriteAllText(IniPath, sb.ToString(), Encoding.UTF8);
             }
             catch { }
@@ -1138,11 +1144,11 @@ namespace HapInstaller
             pDevice.Controls.Add(lblDevice);
             pDevice.Controls.Add(MakeBtn("连接检测", 700, 0, 96, 26, Color.FromArgb(58, 58, 76), Color.FromArgb(72, 72, 94), (s, e) => CheckDevice()));
             pDevice.Controls.Add(FieldLabel("IP", 16, 38));
-            txtIp = MakeText(52, 38, 130, "");
-            pDevice.Controls.Add(txtIp);
+                txtIp = MakeText(52, 38, 130, settings.LastIp);
+                pDevice.Controls.Add(txtIp);
             pDevice.Controls.Add(FieldLabel("端口", 196, 38));
-            txtPort = MakeText(238, 38, 90, "");
-            pDevice.Controls.Add(txtPort);
+                txtPort = MakeText(238, 38, 90, settings.LastPort);
+                pDevice.Controls.Add(txtPort);
             pDevice.Controls.Add(MakeBtn("无线连接", 344, 38, 100, 28, Color.FromArgb(77, 159, 255), Color.FromArgb(102, 176, 255), (s, e) => Tconn()));
             Controls.Add(pDevice);
             y += 92;
@@ -1472,6 +1478,12 @@ namespace HapInstaller
             int exit;
             string outText = ProcessRunner.Run(settings.HdcPath, "tconn " + target, out exit);
             Log("无线连接 " + target + " -> " + outText.Trim());
+            if (outText.IndexOf("[Fail]", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                settings.LastIp = ip;
+                settings.LastPort = port;
+                settings.Save();
+            }
             CheckDevice();
         }
 
